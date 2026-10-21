@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff8ee">
+<title>Inventatorii — atelierul de idei</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='54'>%F0%9F%92%A1</text></svg>">
+</head>
+<body>
+
+<main id="loginWall" class="login-wall">
+  <form id="loginForm" class="login-card">
+    <div class="login-icon" aria-hidden="true">💡</div>
+    <h1>INVENTATORII</h1>
+    <p>Intră în atelierul de idei!</p>
+    <label for="loginUser">Utilizator</label>
+    <input id="loginUser" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="Numele tău de utilizator" required>
+    <label for="loginPassword">Parolă</label>
+    <div class="password-field">
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+      <button id="togglePassword" type="button" aria-label="Arată parola" aria-pressed="false">Arată</button>
+    </div>
+    <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
+    <button id="loginSubmit" class="btn" type="submit">Intră în joc →</button>
+    <p class="login-note">Folosește contul primit de la profesor.</p>
+    <noscript>Activează JavaScript în browser pentru a intra în joc.</noscript>
+  </form>
+</main>
+
+<div id="gameRoot" hidden inert>
+
+
+<!-- pânza pentru confetti / scântei -->
+<canvas id="fxcanvas"></canvas>
+
+<!-- ============ MENIU ============ -->
+<section class="screen active" id="s-menu">
+  <div class="wrap">
+    <div class="menu-hero">
+      <div class="heroes" id="menuHeroes"></div>
+      <h1 class="logo">INVENTATORII</h1>
+      <p class="logo-sub">200 de provocări pentru mintea ta · clasele I–IV</p>
+    </div>
+
+    <div class="diff-row" id="diffRow">
+      <button class="diff" data-d="usor">Ușor<small>multe indicii</small></button>
+      <button class="diff" data-d="mediu">Mediu<small>ca la carte</small></button>
+      <button class="diff" data-d="greu">Greu<small>fără ajutor</small></button>
+    </div>
+
+    <div class="mode-grid">
+      <button class="mode-card build" id="cardBuild">
+        <span class="badge" id="badgeBuild">0 / 100</span>
+        <div class="mode-art" id="artBuild"></div>
+        <h2>Atelierul de invenții</h2>
+        <p>Primești o problemă. Alegi piesele potrivite și construiești invenția care o rezolvă.</p>
+        <div class="progbar"><i id="pbBuild" style="width:0%"></i></div>
+        <div class="prog-text" id="ptBuild">100 de nivele · 10 capitole</div>
+      </button>
+
+      <button class="mode-card fix" id="cardFix">
+        <span class="badge" id="badgeFix">0 / 100</span>
+        <div class="mode-art" id="artFix"></div>
+        <h2>Laboratorul de mistere</h2>
+        <p>S-a întâmplat ceva ciudat. Cauți indicii, pui cauzele în ordine și găsești rezolvarea.</p>
+        <div class="progbar"><i id="pbFix" style="width:0%"></i></div>
+        <div class="prog-text" id="ptFix">100 de nivele · 10 capitole</div>
+      </button>
+    </div>
+
+    <div class="menu-row">
+      <span class="account-name" id="currentUser"></span>
+      <button class="btn ghost" id="btnLogout">Ieși din cont</button>
+      <button class="btn ghost" id="btnHelp">❓ Cum se joacă</button>
+      <button class="btn ghost" id="btnAlbum">📔 Albumul meu</button>
+      <button class="icon-btn" id="btnSound" title="Sunet">🔊</button>
+      <button class="icon-btn" id="btnVoice" title="Citește textul cu voce tare">🗣️</button>
+      <select class="voice-sel hidden" id="voiceSel" title="Alege vocea naratorului"></select>
+    </div>
+    <p class="tiny center mt" id="menuFoot"></p>
+  </div>
+</section>
+
+<!-- ============ HARTA NIVELELOR ============ -->
+<section class="screen" id="s-map">
+  <div class="topbar">
+    <button class="icon-btn" data-nav="menu">←</button>
+    <h2 id="mapTitle">Atelierul de invenții<span class="sub" id="mapSub"></span></h2>
+    <div class="pill"><span class="st">★</span><span id="mapStars">0</span></div>
+  </div>
+  <div class="wrap"><div class="chapters" id="chapters"></div></div>
+</section>
+
+<!-- ============ ECRANUL DE JOC ============ -->
+<section class="screen" id="s-play">
+  <div class="topbar">
+    <button class="icon-btn" id="btnBack">←</button>
+    <h2 id="playTitle">—<span class="sub" id="playSub"></span></h2>
+    <button class="icon-btn" id="btnSay" title="Citește">🗣️</button>
+    <button class="icon-btn" id="btnHint" title="Indiciu">💡</button>
+  </div>
+  <div class="wrap">
+    <div class="play">
+      <div class="stage" id="stage"></div>
+      <div class="panel" id="panel"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ALBUM ============ -->
+<section class="screen" id="s-album">
+  <div class="topbar">
+    <button class="icon-btn" data-nav="menu">←</button>
+    <h2>Albumul meu<span class="sub">invenții construite și insigne</span></h2>
+    <div class="pill"><span class="st">★</span><span id="albStars">0</span></div>
+  </div>
+  <div class="wrap" id="albumBody"></div>
+</section>
+
+<!-- ============ FERESTRE ============ -->
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+</div>
+
+<script src="js/art.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/levels-build.js"></script>
+<script src="js/levels-fix.js"></script>
+<script src="js/game.js"></script>
+<script src="js/accounts.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
