@@ -18,9 +18,8 @@ de joasă, jocul se micșorează singur, proporțional, ca să rămână tot viz
 Jocul afișează mai întâi un formular de autentificare. Pentru Forever Afterschool
 sunt configurate 36 de conturi: `user01`–`user30`, `teacher01`–`teacher05` și `admin`,
 cu parolele din lista de conturi furnizată separat de administrator.
-Toate conturile au acces la același joc; versiunea copiată din Clopoțica nu include
-un panou separat pentru profesori sau administratori.
-Nu există înregistrare publică. Utilizatorul nu diferențiază literele mari de cele
+Toate conturile au acces la același joc. Conturile se administrează din panoul
+`/admin` (vezi mai jos). Nu există înregistrare publică. Utilizatorul nu diferențiază literele mari de cele
 mici; parola trebuie introdusă exact.
 
 - „Ieși din cont” închide sesiunea fără să șteargă progresul.
@@ -28,7 +27,8 @@ mici; parola trebuie introdusă exact.
   `sessionStorage`. Dacă browserul blochează stocarea, login-ul funcționează doar
   până la reîncărcare.
 - Progresul rămâne în browser, separat pentru fiecare cont, în chei precum
-  `inventatorii.v1.user01`. Nu se sincronizează între dispozitive.
+  `inventatorii.v1.user01`. Nu se sincronizează între dispozitive (doar resetările
+  cerute din panoul admin ajung pe toate dispozitivele).
 - Progresul anonim anterior (`inventatorii.v1`) este păstrat, dar nu este atribuit
   automat niciunui cont.
 - Ambele variante, `index.html` și `inventatorii-un-fisier.html`, includ login-ul.
@@ -46,8 +46,44 @@ rulează pe `localhost`. Deschiderea locală prin `file://` depinde de suportul
 browserului pentru Web Crypto în acest context. Dacă lipsește, formularul afișează
 instrucțiuni pentru HTTPS/localhost.
 
-Fișierele pentru login sunt `js/auth.js` și `js/accounts.js`. După orice modificare,
-rulează `node build-artifact.js` pentru a actualiza și versiunea într-un singur fișier.
+Fișierele pentru login sunt `js/auth.js`, `accounts.json` (lista activă de conturi)
+și `js/accounts.js` (lista inițială, folosită doar ca rezervă). După orice modificare
+a fișierelor din `js/`, rulează `node build-artifact.js` pentru a actualiza și
+versiunea într-un singur fișier.
+
+### Panoul de administrare (`/admin`)
+
+Adresa: https://foreverafterschool.github.io/inventatorii/admin/
+
+Cu parola contului `admin`, panoul permite:
+
+- **adăugarea** unui cont (utilizator și parolă, cu buton care generează parola);
+- **ștergerea** unui cont: nu se mai poate intra cu el de pe niciun dispozitiv;
+- **resetarea progresului** unui cont: progresul se șterge pe toate dispozitivele.
+
+Nu există server sau bază de date. Lista de conturi stă în `accounts.json`, în
+repository. Panoul modifică fișierul prin API-ul GitHub (fiecare acțiune e un
+commit pe `main`), GitHub Pages îl republică în 1–2 minute, iar jocul îl citește
+la fiecare pornire. O resetare pune pe cont un marcaj `reset` (data resetării);
+când jocul vede un marcaj nou, șterge o singură dată progresul local al contului,
+pe fiecare dispozitiv. Un cont nou primește și el marcajul, ca să pornească de la
+zero chiar dacă numele a mai fost folosit. Modificările se aplică la următoarea
+deschidere sau reîncărcare a jocului.
+
+La prima intrare pe un dispozitiv, panoul cere și o **cheie de acces GitHub**
+(fine-grained personal access token), creată din contul `foreverafterschool`,
+doar pentru cele trei repository-uri ale jocurilor, cu permisiunea
+*Contents: Read and write*. Pașii sunt explicați în panou. Cheia rămâne doar în
+browserul acelui dispozitiv, e folosită de panourile tuturor celor trei jocuri
+și nu se pune niciodată în repository. Fără cheie nu se poate modifica nimic;
+parola admin doar împiedică folosirea panoului pe un dispozitiv unde cheia e deja
+salvată.
+
+Dacă `accounts.json` nu poate fi citit (de exemplu `inventatorii-un-fisier.html`
+deschis de pe stick, prin `file://`), jocul folosește lista inițială din
+`js/accounts.js`, fără modificările din panou. Pentru dezvoltatori: panoul face
+commit-uri direct pe `main`, deci rulează `git pull` înainte de a lucra în
+repository.
 
 ---
 
@@ -119,6 +155,8 @@ Aceleași nivele, alt sprijin — așa că frații de vârste diferite pot juca 
 
 ```
 index.html               ecranele (meniu, hartă, joc, album)
+accounts.json            lista de conturi (modificată din panoul admin)
+admin/index.html         panoul de administrare (/admin)
 css/style.css            tema vizuală, animațiile, layoutul responsiv
 js/art.js                ~130 de icoane, 19 scene și 3 personaje, desenate în SVG din cod
 js/fx.js                 sunete (Web Audio), confetti, citire cu voce tare

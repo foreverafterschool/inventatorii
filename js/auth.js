@@ -4,7 +4,11 @@
   'use strict';
   var SESSION_KEY = 'inventatorii.session.v1';
   var SESSION_MS = 8 * 60 * 60 * 1000;
+  // Lista activă de conturi este accounts.json, administrată din pagina admin/.
+  // js/accounts.js e doar rezerva pentru când fișierul nu se poate citi (de ex. file://).
   var accounts = window.INVENTATORII_ACCOUNTS;
+  // Folosit pentru utilizatorii necunoscuți, ca verificarea să dureze la fel.
+  var NO_ACCOUNT = { salt: '00'.repeat(16), hash: '00'.repeat(32) };
   var form = document.getElementById('loginForm');
   var userInput = document.getElementById('loginUser');
   var passwordInput = document.getElementById('loginPassword');
@@ -12,6 +16,17 @@
   var submit = document.getElementById('loginSubmit');
   var activeSession = null;
   var busy = false;
+
+  // Se citește la fiecare pornire, ca ștergerile și resetările din admin să ajungă pe toate dispozitivele.
+  function loadAccounts() {
+    return fetch('accounts.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      })
+      .then(function (data) { if (data && data.users && data.iterations) accounts = data; })
+      .catch(function () { /* Fără rețea sau deschis prin file://: rămâne lista de rezervă. */ });
+  }
 
   function hasAccount(username) {
     return typeof username === 'string' && Object.prototype.hasOwnProperty.call(accounts.users, username);
@@ -41,7 +56,8 @@
     document.getElementById('loginWall').hidden = true;
     document.getElementById('gameRoot').hidden = false;
     document.getElementById('gameRoot').removeAttribute('inert');
-    window.startInventatorii(session.username);
+    // Al doilea argument: marcajul ultimei resetări de progres cerute din admin (sau nimic).
+    window.startInventatorii(session.username, accounts.users[session.username].reset || '');
     document.getElementById('cardBuild').focus();
     setTimeout(logout, Math.max(0, session.expires - Date.now()));
   }
@@ -52,7 +68,7 @@
 
   async function verify(username, password) {
     // Aceeași derivare și pentru utilizatorii inexistenți.
-    var account = hasAccount(username) ? accounts.users[username] : accounts.users.user01;
+    var account = hasAccount(username) ? accounts.users[username] : NO_ACCOUNT;
     var key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
     var bits = await crypto.subtle.deriveBits({
       name: 'PBKDF2', hash: 'SHA-256', salt: fromHex(account.salt), iterations: accounts.iterations
@@ -80,6 +96,7 @@
     submit.disabled = true;
     submit.textContent = 'Se verifică…';
     try {
+      await ready;
       if (!await verify(username, password)) {
         error.textContent = 'Utilizator sau parolă incorectă. Încearcă din nou.';
         passwordInput.value = '';
@@ -109,7 +126,10 @@
   function checkExpiry() { if (activeSession && activeSession.expires <= Date.now()) logout(); }
   window.addEventListener('pageshow', checkExpiry);
   document.addEventListener('visibilitychange', checkExpiry);
-  var saved = readSession();
-  if (saved) enter(saved);
-  else userInput.focus();
+  var ready = loadAccounts();
+  ready.then(function () {
+    var saved = readSession();
+    if (saved) enter(saved);
+    else if (!form.contains(document.activeElement)) userInput.focus();
+  });
 })();
