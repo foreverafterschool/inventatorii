@@ -55,7 +55,8 @@ versiunea într-un singur fișier.
 
 Adresa: https://foreverafterschool.github.io/inventatorii/admin/
 
-Cu parola contului `admin`, panoul permite:
+Intrarea se face cu utilizatorul `admin` și parola panoului (comunicată separat, aceeași
+pentru toate cele trei jocuri și diferită de parola contului `admin` din joc). Panoul permite:
 
 - **adăugarea** unui cont (utilizator și parolă, cu buton care generează parola);
 - **ștergerea** unui cont: nu se mai poate intra cu el de pe niciun dispozitiv;
@@ -70,14 +71,14 @@ pe fiecare dispozitiv. Un cont nou primește și el marcajul, ca să pornească 
 zero chiar dacă numele a mai fost folosit. Modificările se aplică la următoarea
 deschidere sau reîncărcare a jocului.
 
-La prima intrare pe un dispozitiv, panoul cere și o **cheie de acces GitHub**
-(fine-grained personal access token), creată din contul `foreverafterschool`,
-doar pentru cele trei repository-uri ale jocurilor, cu permisiunea
-*Contents: Read and write*. Pașii sunt explicați în panou. Cheia rămâne doar în
-browserul acelui dispozitiv, e folosită de panourile tuturor celor trei jocuri
-și nu se pune niciodată în repository. Fără cheie nu se poate modifica nimic;
-parola admin doar împiedică folosirea panoului pe un dispozitiv unde cheia e deja
-salvată.
+Pentru a salva în repository, panoul folosește o cheie de acces GitHub (token cu
+drept de scriere pe cele trei repository-uri), păstrată în `admin/key.json` criptată
+cu parola panoului (AES-256-GCM, cheie derivată cu PBKDF2-SHA-256, 1.000.000 de
+iterații). Parola nu apare în repository. Când tokenul expiră sau parola se schimbă,
+`admin/key.json` trebuie regenerat (același fișier în toate cele trei repository-uri).
+Fișierul criptat este public, deci siguranța depinde de lungimea parolei: o parolă
+scurtă poate fi ghicită offline cu suficient efort. Dacă bănuiești asta, revocă
+tokenul pe GitHub și generează altul.
 
 Dacă `accounts.json` nu poate fi citit (de exemplu `inventatorii-un-fisier.html`
 deschis de pe stick, prin `file://`), jocul folosește lista inițială din
